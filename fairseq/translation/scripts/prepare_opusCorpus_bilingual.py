@@ -14,18 +14,30 @@ with open(file_path, 'r') as corpus:
 	cleaned_corpus = []
 
 	for line in split_corpus:
-		
-		# remove words enclosed by brackets e.g (123), ()
-		line = re.sub(r'\([^)]*\)', '', line)
 
-		# remove punctuations 
-		line = line.translate(str.maketrans('', '', string.punctuation))
+		# remove text in the following forms: ( Titus 2 : 10 )
+		line = re.sub(r'(\(\s[a-zA-Z]+\s[0-9]+\s:(\s[0-9]+\s\)|(\s[0-9]+-[0-9]+\s)\)))', '', line)
 
-		# remove extra space between words
-		line = ' '.join(re.split(r'\s+', line)).strip()
+		# remove icons and bullet points
+		line = re.sub(r'©\s|●\s|✔\s|•\s|▪\s|➤\s|◯\s|□\s|\s⇩', '', line)
+
+		# remove anything that is contained in a bracket and the bracket itself
+		# Ref: https://www.codegrepper.com/code-examples/python/python+remove+anything+in+brackets+from+string
+		line = re.sub(r"[\(\[].*?[\)\]]", '', line)
+
+		# remove the * character 
+		line = re.sub(r'\*', '', line)
+
+		#line = re.sub(r'\.{3,}|\s[\.{3,}\s]+', '', line)
+
+		line = re.sub(r'([\t ]*(?:\r?\n|\r))+', '', line)
+
+		#line = re.sub(r'[a-zA-Z]?\--+', '', line)
+
+		#line = re.sub(r'[a-zA-Z]?\...+', '', line)
 
 		cleaned_corpus.append(''.join(line)  + '\n')
 
-	with open(file_path, 'w') as f:
+	with open('cleaned.' + lang, 'w') as f:
 		for line in cleaned_corpus:
 			f.write(line)
