@@ -14,10 +14,12 @@ LC=$SCRIPTS/tokenizer/lowercase.perl
 BPEROOT=subword-nmt/subword_nmt
 BPE_TOKENS=10000
 
+cd ../ # cd to translation directory 
+
 src=en
 tgt=xh
 lang=en-xh
-prep=tokenized.en-xh
+prep=baseline-tokenized.en-xh
 tmp=$prep/tmp
 datasets_dir=xhosa_data/parallel # directory containing all the datasets 
 
@@ -41,13 +43,13 @@ else
 	wget $url_eng_sadilar --output-document $sadilar_dir/sadilar.en
 
 	echo "Cleaning data..."
-	python3 prepare_sadilar.py $sadilar_dir/sadilar.en $src
+	python3 scripts/prepare_sadilar_bilingual.py $sadilar_dir/sadilar.en $src
 
 	echo "Downloading Xhosa corpus from the sadilar website..."
 	wget $url_xho_sadilar --output-document $sadilar_dir/sadilar.xh
 
 	echo "Cleaning data..."
-	python3 prepare_sadilar.py $sadilar_dir/sadilar.xh $tgt
+	python3 scripts/prepare_sadilar_bilingual.py $sadilar_dir/sadilar.xh $tgt
 
 fi
 
@@ -73,22 +75,22 @@ fi
 
 
 
-# if [ -d $memat_dir ]
-# then 
-# 	echo "Directory already exist."
+if [ -d $memat_dir ]
+then 
+	echo "Directory already exist."
 
-# else
-# 	mkdir -p $memat_dir
+else
+	mkdir -p $memat_dir
 
-# 	cd $memat_dir
+	cd $memat_dir
 
-# 	echo "Cloning data from memat git repository..."
-# 	git clone https://github.com/mkeet/MeMat.git
+	echo "Cloning data from memat git repository..."
+	git clone https://github.com/mkeet/MeMat.git
 
-# 	echo "Cleaning data..."
-# 	#python3 prepare_memat.py $memat_dir
+	echo "Cleaning data..."
+	python3 prepare_memat.py $memat_dir
 
-# fi
+fi
 
 echo "Splitting dataset into training and testing sets..."
 
@@ -96,7 +98,7 @@ declare -a datasets
 
 datasets[0]=$sadilar_dir
 datasets[1]=$opusCorpus_dir
-#datasets[2]=$memat_dir
+datasets[2]=$memat_dir
 
 python3 train_test_split.py $datasets_dir ${datasets[@]} $src $tgt
 
@@ -110,7 +112,7 @@ for l in $src $tgt; do
 	echo ""
 done
 
-# # perl $CLEAN -ratio 1.5 $tmp/train.tags.$lang.tok $src $tgt $tmp/train.tags.$lang.clean 1 175
+perl $CLEA $tmp/train.tags.$lang.tok $src $tgt $tmp/train.tags.$lang.clean 1 175
 for l in $src $tgt; do
     perl $LC < $tmp/train.tags.$lang.tok.$l > $tmp/train.tags.$lang.$l
 done
@@ -127,8 +129,8 @@ done
 
 echo "creating train, valid, test..."
 for l in $src $tgt; do
-	awk '{if (NR%23 == 0)  print $0; }' $tmp/train.tags.en-xh.$l > $tmp/valid.$l
-    awk '{if (NR%23 != 0)  print $0; }' $tmp/train.tags.en-xh.$l > $tmp/train.$l
+	awk '{if (NR%100 == 0)  print $0; }' $tmp/train.tags.en-xh.$l > $tmp/valid.$l
+    awk '{if (NR%100 != 0)  print $0; }' $tmp/train.tags.en-xh.$l > $tmp/train.$l
 
 done
 
