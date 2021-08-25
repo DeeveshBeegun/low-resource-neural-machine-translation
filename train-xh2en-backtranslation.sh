@@ -2,46 +2,39 @@ SCRIPT_DIR=neural_machine_translation/backtranslation/scripts
 
 # Download and prepare the data
 cd neural_machine_translation/backtranslation/scripts/
-#bash prepare-en2xh-baseline.sh
+bash prepare-en2xh-baseline.sh
 cd ../../..
 
-# # Binarize the data
-# TEXT=neural_machine_translation/backtranslation/scripts/baseline-tokenized.en-xh
-# fairseq-preprocess \
-# 	--joined-dictionary \
-# 	--source-lang en --target-lang xh \
-# 	--trainpref $TEXT/train --validpref $TEXT/valid --testpref $TEXT/test \
-# 	--destdir $SCRIPT_DIR/data-bin/en_xh --thresholdtgt 0 --thresholdsrc 0 \
-# 	--workers 20
-# # Copy the BPE code into the data-bin directory for future use
-# cp neural_machine_translation/backtranslation/scripts/baseline-tokenized.en-xh/code $SCRIPT_DIR/data-bin/en_xh/code
+# Binarize the data
+TEXT=neural_machine_translation/backtranslation/scripts/baseline-tokenized.en-xh
+fairseq-preprocess \
+	--joined-dictionary \
+	--source-lang en --target-lang xh \
+	--trainpref $TEXT/train --validpref $TEXT/valid --testpref $TEXT/test \
+	--destdir $SCRIPT_DIR/data-bin/en_xh --thresholdtgt 0 --thresholdsrc 0 \
+	--workers 20
+# Copy the BPE code into the data-bin directory for future use
+cp neural_machine_translation/backtranslation/scripts/baseline-tokenized.en-xh/code $SCRIPT_DIR/data-bin/en_xh/code
 
-# # Train a reverse model (Xhosa to English) to do the back-translation
+# Train a reverse model (Xhosa to English) to do the back-translation
 CHECKPOINT_DIR=$SCRIPT_DIR/checkpoint_xh_en_parallel
-# fairseq-train $SCRIPT_DIR/data-bin/en_xh \
-# 	--source-lang xh --target-lang en \
-# 	--arch transformer --share-all-embeddings \
-# 	--dropout 0.3 --weight-decay 0.0 \
-# 	--criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
-# 	--optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
-# 	--lr 0.001 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
-# 	--max-tokens 100 --update-freq 16 \
-# 	--max-update 30000 \
-# 	--save-dir $CHECKPOINT_DIR
-
-# # Evalate back-translation model to make sure it is well trained
-# bash fairseq/backtranslation/sacrebleu.sh \
-# 	change-dir-here \
-# 	data-bin/en_xh \
-# 	data-bin/en_xh/code \
-# 	$CHECKPOINT_DIR/checkpoint_best.py
+fairseq-train $SCRIPT_DIR/data-bin/en_xh \
+	--source-lang xh --target-lang en \
+	--arch transformer --share-all-embeddings \
+	--dropout 0.3 --weight-decay 0.0 \
+	--criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
+	--optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
+	--lr 0.001 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
+	--max-tokens 100 --update-freq 16 \
+	--max-update 30000 \
+	--max-epoch 4 \
+	--save-dir $CHECKPOINT_DIR
 
 # Prepare monolingual data
 cd $SCRIPT_DIR
 bash prepare-xh-backtranslation.sh 
 
 cd ../../../
-pwd
 
 
 # Binarize each shard of the monolingual data
@@ -59,8 +52,6 @@ for SHARD in $(seq -f "%02g" 0 1); do \
 done
 
 # perform back-translation over the monolingual data
-
-
 mkdir $SCRIPT_DIR/backtranslation_output
 for SHARD in $(seq -f "%02g" 0 1); do \
 	fairseq-generate $SCRIPT_DIR/data-bin/xh_monolingual/shard${SHARD} \
@@ -74,14 +65,12 @@ done
 
 
 # use extract_bt_data.py scrit to re-combine the shards, extract the back-translations and apply length ratio filters
-
 python $SCRIPT_DIR/extract_bt_data.py \
 	--minlen 1 --maxlen 250 --ratio 1.5 \
 	--output $SCRIPT_DIR/backtranslation_output/bt_data --srclang en --tgtlang xh \
 	$SCRIPT_DIR/backtranslation_output/sampling.shard*.out
 
 # Binarise the filtered BT data and combine it with the parallel data
-
 TEXT=$SCRIPT_DIR/backtranslation_output
 fairseq-preprocess \
 	--source-lang en --target-lang xh \
@@ -111,7 +100,6 @@ for LANG in en xh; do \
 done
 
 # Train a model over the parallel + BT data 
-
 CHECKPOINT_DIR=$SCRIPT_DIR/checkpoints_en_xh_parallel_plus_bt
 fairseq-train $SCRIPT_DIR/data-bin/en_xh_para_plus_bt \
 	--upsample-primary 16 \
@@ -126,19 +114,6 @@ fairseq-train $SCRIPT_DIR/data-bin/en_xh_para_plus_bt \
 	--max-epoch 4 \
 	--save-dir $CHECKPOINT_DIR
 
-# # average the last 10 checkpoints
-# python scripts/average_checkpoints.py \
-# 	--inputs $CHECKPOINT_DIR \
-# 	--num-epoch-checkpoints 10 \
-# 	--output $CHECKPOINT_DIR/checkpoint.avg10.pt
-
-# # detokenized sacrebleu
-# bash fairseq/backtranslation/sacrebleu.sh \
-# 	change_dir \
-# 	en-xh \
-# 	data-bin/en_xh \
-# 	data-bin/en_xh/code \
-# 	$CHECKPOINT_DIR/checkpoint.avg10.pt
 
 
 	
