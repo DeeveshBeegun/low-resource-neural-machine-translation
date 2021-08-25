@@ -1,12 +1,12 @@
 # This script is for training the baseline NMT model for the translation of English to isiXhosa
 
 # Download and prepare the data
-cd examples/translation/
+cd fairseq/translation/scripts/
 bash prepare-en2xh-baseline.sh
 cd ../..
 
 # Preprocess/binarize the data
-TEXT=examples/translation/baseline-tokenized.en-xh
+TEXT=translation/baseline-tokenized.en-xh
 fairseq-preprocess --source-lang en --target-lang xh \
 	--trainpref $TEXT/train --validpref $TEXT/valid --testpref $TEXT/test \
 	--destdir data-bin/baseline-tokenized.en-xh \
