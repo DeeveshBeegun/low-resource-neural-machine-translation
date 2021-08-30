@@ -1,5 +1,8 @@
 # This script is for training the baseline NMT model for the translation of English to isiZulu
 
+pip install sacremoses
+pip install sacrebleu==1.5.1
+
 # Download and prepare the data
 cd neural_machine_translation/translation/
 bash prepare-en2zu-baseline.sh

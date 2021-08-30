@@ -2,11 +2,11 @@
 #
 # Adapted from https://github.com/facebookresearch/MIXER/blob/master/prepareData.sh
 
-echo 'Cloning Moses github repository (for tokenization scripts)...'
-git clone https://github.com/moses-smt/mosesdecoder.git
+# echo 'Cloning Moses github repository (for tokenization scripts)...'
+# git clone https://github.com/moses-smt/mosesdecoder.git
 
-echo 'Cloning Subword NMT repository (for BPE pre-processing)...'
-git clone https://github.com/rsennrich/subword-nmt.git
+# echo 'Cloning Subword NMT repository (for BPE pre-processing)...'
+# git clone https://github.com/rsennrich/subword-nmt.git
 
 SCRIPTS=mosesdecoder/scripts
 TOKENIZER=$SCRIPTS/tokenizer/tokenizer.perl
@@ -27,57 +27,57 @@ opusCorpus_dir=$datasets_dir/opus_corpus # contains jw300 datasets
 
 dataset_num=2
 
-mkdir -p $datasets_dir $tmp $prep
+# mkdir -p $datasets_dir $tmp $prep
 
-if [ -d $sadilar_dir ]
-then 
-	echo "Directory already exist, skipping downloading."
+# if [ -d $sadilar_dir ]
+# then 
+# 	echo "Directory already exist, skipping downloading."
 
-else 
-	mkdir -p $sadilar_dir 
+# else 
+# 	mkdir -p $sadilar_dir 
 
-	url_eng_zu_sadilar="https://repo.sadilar.org/bitstream/handle/20.500.12185/399/en-zu.release.zip?sequence=3&isAllowed=y"
+# 	url_eng_zu_sadilar="https://repo.sadilar.org/bitstream/handle/20.500.12185/399/en-zu.release.zip?sequence=3&isAllowed=y"
 
-	echo "Downloading English and Zulu corpora from the sadilar website..."
-	wget $url_eng_zu_sadilar --output-document $sadilar_dir/sadilar.zip
+# 	echo "Downloading English and Zulu corpora from the sadilar website..."
+# 	wget $url_eng_zu_sadilar --output-document $sadilar_dir/sadilar.zip
 
-	cd $sadilar_dir
+# 	cd $sadilar_dir
 
-	unzip sadilar.zip
+# 	unzip sadilar.zip
 
-	mv *.eng.*.txt sadilar.en
-	mv *.zul.*.txt sadilar.zu
+# 	mv *.eng.*.txt sadilar.en
+# 	mv *.zul.*.txt sadilar.zu
 
-	cd ../../../
+# 	cd ../../../
 
-	echo "Cleaning data..."
-	python3 prepare_sadilar_bilingual.py $sadilar_dir/sadilar $src $tgt
+# 	echo "Cleaning data..."
+# 	python3 prepare_sadilar_bilingual.py $sadilar_dir/sadilar $src $tgt
 	
 
-fi
+# fi
 
 
-if [ -d $opusCorpus_dir ]
-then 
-	echo "Directory already exist, skipping downloading."
+# if [ -d $opusCorpus_dir ]
+# then 
+# 	echo "Directory already exist, skipping downloading."
 
-else
-	mkdir -p $opusCorpus_dir
+# else
+# 	mkdir -p $opusCorpus_dir
 
-	cd $opusCorpus_dir
+# 	cd $opusCorpus_dir
 
-	echo "Downloading jw300 datasets from Opus Corpus..."
-	pip install opustools
-	opus_read -d JW300 -s zu -t en -wm moses -w jw300.zu jw300.en
+# 	echo "Downloading jw300 datasets from Opus Corpus..."
+# 	pip install opustools
+# 	opus_read -d JW300 -s zu -t en -wm moses -w jw300.zu jw300.en
 
-	cd ../../../
+# 	cd ../../../
 
-	echo "Cleaning data..."
-	python3 prepare_opusCorpus_bilingual.py $opusCorpus_dir/jw300 $src $tgt
+# 	echo "Cleaning data..."
+# 	python3 prepare_opusCorpus_bilingual.py $opusCorpus_dir/jw300 $src $tgt
 
-fi
+# fi
 
-python3 prepare_opusCorpus_bilingual.py $opusCorpus_dir/jw300 $src $tgt
+# python3 prepare_opusCorpus_bilingual.py $opusCorpus_dir/jw300 $src $tgt
 
 
 echo "Splitting dataset into training and testing sets..."

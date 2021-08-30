@@ -1,7 +1,7 @@
 # This script is for training the baseline NMT model for the translation of English to isiXhosa
 
-
-pip install sacremoses 
+pip install sacremoses
+pip install sacrebleu==1.5.1
 
 # Download and prepare the data
 cd neural_machine_translation/translation/
