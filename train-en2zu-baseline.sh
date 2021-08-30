@@ -1,20 +1,20 @@
-# This script is for training the baseline NMT model for the translation of English to isiXhosa
+# This script is for training the baseline NMT model for the translation of English to isiZulu
 
 # Download and prepare the data
-cd fairseq/translation/scripts/
-bash prepare-en2xh-baseline.sh
+cd neural_machine_translation/translation/
+bash prepare-en2zu-baseline.sh
 cd ../..
 
 # Preprocess/binarize the data
-TEXT=translation/baseline-tokenized.en-xh
-fairseq-preprocess --source-lang en --target-lang xh \
+TEXT=neural_machine_translation/translation/baseline-tokenized.en-zu
+fairseq-preprocess --source-lang en --target-lang zu \
 	--trainpref $TEXT/train --validpref $TEXT/valid --testpref $TEXT/test \
-	--destdir data-bin/baseline-tokenized.en-xh \
+	--destdir data-bin-en2zu/baseline-tokenized.en-zu \
 	--workers 20
 
 # Train translation model over data
 CUDA_VISIBLE_DEVICES=0 fairseq-train \
-	data-bin/baseline-tokenized.en-xh \
+	data-bin-en2zu/baseline-tokenized.en-zu \
 	--arch transformer --share-decoder-input-output-embed \
 	--optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
 	--lr 5e-4 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
@@ -29,7 +29,7 @@ CUDA_VISIBLE_DEVICES=0 fairseq-train \
 	--best-checkpoint-metric bleu --maximize-best-checkpoint-metric
 
 # Evaluate trained model
-fairseq-generate data-bin/baseline-tokenized.en-xh \
+fairseq-generate data-bin-en2zu/baseline-tokenized.en-zu \
 	--path checkpoints/checkpoint_best.pt \
 	--batch-size 128 --beam 5 --remove-bpe
 

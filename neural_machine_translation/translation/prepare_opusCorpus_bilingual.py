@@ -3,40 +3,47 @@ import string
 import re
 
 file_path = sys.argv[1]
-lang = sys.argv[2]
+src_lang = sys.argv[2]
+tgt_lang = sys.argv[3]
 
-with open(file_path, 'r') as corpus:
-	corpus_content = corpus.read()
+for lang in [src_lang, tgt_lang]:
 
-	split_corpus = corpus_content.strip().split('\n')
+	with open(file_path + '.' + lang, 'r') as corpus:
+		corpus_content = corpus.read()
 
-	cleaned_corpus = []
+		split_corpus = corpus_content.strip().split('\n')
 
-	for line in split_corpus:
+		cleaned_corpus = []
 
-		# remove text in the following forms: ( Titus 2 : 10 )
-		line = re.sub(r'(\(\s[a-zA-Z]+\s[0-9]+\s:(\s[0-9]+\s\)|(\s[0-9]+-[0-9]+\s)\)))', '', line)
+		for line in split_corpus:
 
-		# remove icons and bullet points
-		line = re.sub(r'©\s|●\s|✔\s|•\s|▪\s|➤\s|◯\s|□\s|\s⇩', '', line)
+			# remove text in the following forms: ( Titus 2 : 10 )
+			line = re.sub(r'(\(\s[a-zA-Z]+\s[0-9]+\s:(\s[0-9]+\s\)|(\s[0-9]+-[0-9]+\s)\)))', '', line)
 
-		# remove anything that is contained in a bracket and the bracket itself
-		# Ref: https://www.codegrepper.com/code-examples/python/python+remove+anything+in+brackets+from+string
-		line = re.sub(r"[\(\[].*?[\)\]]", '', line)
+			# remove icons and bullet points
+			line = re.sub(r'©\s|●\s|✔\s|•\s|▪\s|➤\s|◯\s|□\s|\s⇩|◆\s|⇨\s', '', line)
 
-		# remove the * character 
-		line = re.sub(r'\*', '', line)
+			# remove anything that is contained in a bracket and the bracket itself
+			# Ref: https://www.codegrepper.com/code-examples/python/python+remove+anything+in+brackets+from+string
+			line = re.sub(r"[\(\[].*?[\)\]]", '', line)
 
-		#line = re.sub(r'\.{3,}|\s[\.{3,}\s]+', '', line)
+			# remove the * character 
+			line = re.sub(r'\*', '', line)
 
-		#line = re.sub(r'([\t ]*(?:\r?\n|\r))+', '', line)
+			# remove continous occurence of '.'
+			line = re.sub(r'[a-zA-Z\s]?\.{3,}', '', line)
 
-		#line = re.sub(r'[a-zA-Z]?\--+', '', line)
+			# remove continous occurence of '.' followed by empty spaces
+			line = re.sub(r'(\s\.){3,}', '', line)
 
-		#line = re.sub(r'[a-zA-Z]?\...+', '', line)
+			# remove continous occurence of '-'
+			line = re.sub(r'[a-zA-Z\s]?\-{3,}', '', line)
 
-		cleaned_corpus.append(''.join(line)  + '\n')
+			# remove extra space between words
+			line = re.sub(r'\s+', ' ', line)
 
-	with open('cleaned.' + lang, 'w') as f:
-		for line in cleaned_corpus:
-			f.write(line)
+			cleaned_corpus.append(''.join(line)  + '\n')
+
+		with open(file_path + '.' + lang + '.cleaned', 'w') as f:
+			for line in cleaned_corpus:
+				f.write(line)

@@ -4,19 +4,15 @@ import glob
 import os
 
 def combine_datasets(file_parent_path, fileDir, src_lang, tgt_lang):
+	for lang in [src_lang, tgt_lang]:
 
-        memat_dir = fileDir[2]
-        opusCorpus_dir = fileDir[1]
-        sadilar_dir = fileDir[0]
-
-        for lang in [src_lang, tgt_lang]:
-                filenames = [memat_dir + '/combined_memat.' + lang, opusCorpus_dir + '/jw300.' + lang, sadilar_dir + '/sadilar.' + lang]
-
-                with open(file_parent_path + '/combined_corpus.' + lang, 'w') as outputFile:                        
-                	for name in filenames:
-                		with open(name) as infile:
-                			for line in infile:
-                				outputFile.write(line)
+		with open(file_parent_path + '/combined_corpus.' + lang, 'w') as outputFile:
+			for path in fileDir:
+				path = path + '/*.' + lang + '.cleaned'
+				for filename in glob.glob(path):
+					with open(filename) as infile:
+						for line in infile:
+							outputFile.write(line)
 
 
 
@@ -53,10 +49,11 @@ def main():
 	fileDir = []
 
 	file_parent_path = sys.argv[1]
-	for i in range(2, 5):
+	number_ofDatasets = sys.argv[2]
+	for i in range(3, 3+int(number_ofDatasets)):
 		fileDir.append(sys.argv[i])
-	src_lang = sys.argv[5]
-	tgt_lang = sys.argv[6]
+	src_lang = sys.argv[3+int(number_ofDatasets)]
+	tgt_lang = sys.argv[3+int(number_ofDatasets)+1]
 
 	print(file_parent_path)
 	print(fileDir)

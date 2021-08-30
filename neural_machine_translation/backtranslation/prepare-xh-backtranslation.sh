@@ -11,34 +11,61 @@ SUBSAMPLE_SIZE=2500
 LANG=xh
 
 OUTDIR=xh_monolingual
-datasets=xhosa_data/monolingual
+datasets_dir=xhosa_data/monolingual
 tmp=$OUTDIR/tmp
 
-mkdir -p $OUTDIR $tmp
+sadilar_dir=$datasets_dir/sadilar
+c4_dir=$datasets_dir/c4
 
-# if [ -d $datasets ]
-# then 
-# 	echo "Directory already exist."
+mkdir -p $datasets_dir $OUTDIR $tmp
 
-# else 
-# 	cd $datasets
+if [ -d $sadilar_dir ]
+then 
+	echo "Directory already exist."
 
-# 	url_xho_sadilar='https://repo.sadilar.org/bitstream/handle/20.500.12185/524/Corpus.SADiLaR.English-isiXhosaDrop-Monolingual.1.0.0.CAM.2019-11-15.xh.txt?sequence=1&isAllowed=y'
+else 
+	mkdir $sadilar_dir
 
-# 	echo "Downloading Xhosa monolingual corpus from the sadilar website..."
-# 	wget $url_xho_sadilar
+	url_xho_sadilar='https://repo.sadilar.org/bitstream/handle/20.500.12185/524/Corpus.SADiLaR.English-isiXhosaDrop-Monolingual.1.0.0.CAM.2019-11-15.xh.txt?sequence=1&isAllowed=y'
 
-# 	echo "Cleaning data..."
-# 	python3 scripts/prepare_sadilar_monolingual.py $sadilar_dir/sadilar.xh $tgt
+	echo "Downloading Xhosa monolingual corpus from the sadilar website..."
+	wget $url_xho_sadilar --output-document $sadilar_dir/sadilar.xh
 
-# 	cd ..
+	# echo "Cleaning data..."
+	# python3 scripts/prepare_sadilar_monolingual.py $sadilar_dir/sadilar.xh
 
-# fi
+	cd ..
+
+fi
+
+if [ -d $c4_dir ]
+then 
+    echo "Directory already, skipping download."
+
+else 
+    mkdir $c4_dir
+
+    cd $c4_dir 
+
+    GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/datasets/allenai/c4
+    cd c4
+    git lfs pull --include "multilingual/c4-xh.*.json.gz"
+
+    cd multiligual 
+
+    gunzip c4-xh.*.json.gz
+
+    python3 prepare_c4_monolingual.py 1 *-xh.*-00000-*.json
+
+    cd ../../
+
+fi
+
 
 if [ -f $tmp/monolingual.${SUBSAMPLE_SIZE}.${LANG} ]; then
 	echo "found monolingual sample, skipping shuffle/sample/tokenize"
 else
-	cat $datasets/clinical.xh \
+	cat $sadilar_dir/saidlar.xh $c4_dir/multiligual/c4.xh \
 	| shuf -n $SUBSAMPLE_SIZE \
 	| perl $TOKENIZER -threads 8 -a -l $LANG \
 	> $tmp/monolingual.${SUBSAMPLE_SIZE}.${LANG}

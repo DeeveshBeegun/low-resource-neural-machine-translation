@@ -24,7 +24,9 @@ datasets_dir=xhosa_data/parallel # directory containing all the datasets
 
 sadilar_dir=$datasets_dir/sadilar # contains sadilar datasets (xhosa_data -> parallel -> sadilar)
 opusCorpus_dir=$datasets_dir/opus_corpus # contains jw300 datasets
-memat_dir=$datasets_dir/memat/MeMat # contains memat datasets
+memat_dir=$datasets_dir/memat # contains memat datasets
+
+dataset_num=3
 
 mkdir -p $datasets_dir $tmp $prep
 
@@ -41,14 +43,11 @@ else
 	echo "Downloading English corpus from the sadilar website..."
 	wget $url_eng_sadilar --output-document $sadilar_dir/sadilar.en
 
-	echo "Cleaning data..."
-	python3 scripts/prepare_sadilar_bilingual.py $sadilar_dir/sadilar.en $src
-
 	echo "Downloading Xhosa corpus from the sadilar website..."
 	wget $url_xho_sadilar --output-document $sadilar_dir/sadilar.xh
 
 	echo "Cleaning data..."
-	python3 scripts/prepare_sadilar_bilingual.py $sadilar_dir/sadilar.xh $tgt
+	python3 prepare_sadilar_bilingual.py $sadilar_dir/sadilar $src $tgt
 
 fi
 
@@ -66,12 +65,12 @@ else
 	pip install opustools
 	opus_read -d JW300 -s xh -t en -wm moses -w jw300.xh jw300.en
 
+	cd ../../../
+
 	echo "Cleaning data..."
-	python3 prepare_opusCorpus.py $opusCorpus_dir/jw300.en $src 
-	python3 prepare_opusCorpus.py $opusCorpus_dir/jw300.xh $tgt
+	python3 prepare_opusCorpus_bilingual.py $opusCorpus_dir/jw300 $src $tgt
 
 fi
-
 
 
 if [ -d $memat_dir ]
@@ -86,8 +85,10 @@ else
 	echo "Cloning data from memat git repository..."
 	git clone https://github.com/mkeet/MeMat.git
 
+	cd ../../../
+
 	echo "Cleaning data..."
-	python3 prepare_memat.py $memat_dir
+	python3 prepare_memat_bilingual.py $memat_dir $src $tgt
 
 fi
 
@@ -95,11 +96,9 @@ echo "Splitting dataset into training and testing sets..."
 
 declare -a datasets
 
-datasets[0]=$sadilar_dir
-datasets[1]=$opusCorpus_dir
-datasets[2]=$memat_dir
+datasets=($sadilar_dir $opusCorpus_dir $memat_dir)
 
-python3 train_test_split.py $datasets_dir ${datasets[@]} $src $tgt
+python3 train_test_split.py $datasets_dir $dataset_num ${datasets[@]} $src $tgt
 
 echo "pre-processing train data..."
 
@@ -111,7 +110,7 @@ for l in $src $tgt; do
 	echo ""
 done
 
-perl $CLEAN $tmp/train.tags.$lang.tok $src $tgt $tmp/train.tags.$lang.clean 1 175
+perl $CLEAN $tmp/train.tags.$lang.tok $src $tgt $tmp/train.tags.$lang.clean 1 200
 for l in $src $tgt; do
     perl $LC < $tmp/train.tags.$lang.tok.$l > $tmp/train.tags.$lang.$l
 done
