@@ -110,7 +110,7 @@ for l in $src $tgt; do
 	echo ""
 done
 
-perl $CLEAN $tmp/train.tags.$lang.tok $src $tgt $tmp/train.tags.$lang.clean 1 200
+perl $CLEAN $tmp/train.tags.$lang.tok $src $tgt $tmp/train.tags.$lang.clean 5 200
 for l in $src $tgt; do
     perl $LC < $tmp/train.tags.$lang.tok.$l > $tmp/train.tags.$lang.$l
 done
