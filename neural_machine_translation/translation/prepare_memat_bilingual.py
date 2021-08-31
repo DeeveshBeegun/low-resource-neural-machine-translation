@@ -33,24 +33,21 @@ def clean_corpus(file_path):
 
 			for line in split_corpus:
 				
-				# remove all text and numbers enclosed by brackets
-				line = re.sub(r'\((\s?[-+]?[0-9a-zA-Z]+\s?)\)', '', line)
+				# # remove all text and numbers enclosed by brackets
+				# line = re.sub(r'\((\s?[-+]?[0-9a-zA-Z]+\s?)\)', '', line)
 
-				# remove all numbers followed by dots
-				line = re.sub(r'[0-9]+.', '', line)
+				# # remove all numbers followed by dots
+				# line = re.sub(r'[0-9]+.', '', line)
 
-				# remove single closed backets
-				line = re.sub(r'(\s?[-+]?[0-9a-zA-Z]+\s?)\)', '', line)
+				# # remove single closed backets
+				# line = re.sub(r'(\s?[-+]?[0-9a-zA-Z]+\s?)\)', '', line)
 
 				# remove icons and bullet points
 				line = re.sub(r'©\s|●\s|✔\s|•\s|▪\s|➤\s|◯\s|□\s|\s⇩|◆\s|⇨\s|\s', '', line)
 
-				# remove anything that is contained in a bracket and the bracket itself
-				# Ref: https://www.codegrepper.com/code-examples/python/python+remove+anything+in+brackets+from+string
-				line = re.sub(r"[\(\[].*?[\)\]]", '', line)
-
-				# remove the * character 
-				line = re.sub(r'\*', '', line)
+				# # remove anything that is contained in a bracket and the bracket itself
+				# # Ref: https://www.codegrepper.com/code-examples/python/python+remove+anything+in+brackets+from+string
+				# line = re.sub(r"[\(\[].*?[\)\]]", '', line)
 
 				# remove continous occurence of '.'
 				line = re.sub(r'[a-zA-Z\s]?\.{3,}', '', line)

@@ -17,18 +17,18 @@ for lang in [src_lang, tgt_lang]:
 
 		for line in split_corpus:
 
-			# remove text in the following forms: ( Titus 2 : 10 )
-			line = re.sub(r'(\(\s[a-zA-Z]+\s[0-9]+\s:(\s[0-9]+\s\)|(\s[0-9]+-[0-9]+\s)\)))', '', line)
+			# # remove text in the following forms: ( Titus 2 : 10 )
+			# line = re.sub(r'(\(\s[a-zA-Z]+\s[0-9]+\s:(\s[0-9]+\s\)|(\s[0-9]+-[0-9]+\s)\)))', '', line)
 
 			# remove icons and bullet points
 			line = re.sub(r'©\s|●\s|✔\s|•\s|▪\s|➤\s|◯\s|□\s|\s⇩|◆\s|⇨\s', '', line)
 
-			# remove anything that is contained in a bracket and the bracket itself
-			# Ref: https://www.codegrepper.com/code-examples/python/python+remove+anything+in+brackets+from+string
-			line = re.sub(r"[\(\[].*?[\)\]]", '', line)
+			# # remove anything that is contained in a bracket and the bracket itself
+			# # Ref: https://www.codegrepper.com/code-examples/python/python+remove+anything+in+brackets+from+string
+			# line = re.sub(r"[\(\[].*?[\)\]]", '', line)
 
-			# remove the * character 
-			line = re.sub(r'\*', '', line)
+			# # remove the * character 
+			# line = re.sub(r'\*', '', line)
 
 			# remove continous occurence of '.'
 			line = re.sub(r'[a-zA-Z\s]?\.{3,}', '', line)

@@ -17,14 +17,14 @@ for lang in [src_lang, tgt_lang]:
 
 		for line in split_corpus:
 			
-			# remove numbers enclosed by brackets e.g ( 3 ), ( 10 )
-			line = re.sub(r'\((\s?[-+]?[0-9a-zA-Z]+\s?)\)', '', line)
+			# # remove numbers enclosed by brackets e.g ( 3 ), ( 10 )
+			# line = re.sub(r'\((\s?[-+]?[0-9a-zA-Z]+\s?)\)', '', line)
 
-			# remove all brackets
-			line = re.sub(r'(\( | \))', '', line)
+			# # remove all brackets
+			# line = re.sub(r'(\( | \))', '', line)
 
-			# remove * in the corpus
-			line = re.sub(r'\*\s', '', line)
+			# # remove * in the corpus
+			# line = re.sub(r'\*\s', '', line)
 
 			# remove continous occurence of '.'
 			line = re.sub(r'[a-zA-Z\s]?\.{3,}', '', line)
