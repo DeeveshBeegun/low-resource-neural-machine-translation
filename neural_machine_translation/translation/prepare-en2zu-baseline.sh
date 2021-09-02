@@ -50,8 +50,8 @@ dataset_num=2
 
 # 	cd ../../../
 
-# 	echo "Cleaning data..."
-# 	python3 prepare_sadilar_bilingual.py $sadilar_dir/sadilar $src $tgt
+echo "Cleaning data..."
+python3 prepare_sadilar_bilingual.py $sadilar_dir/sadilar $src $tgt
 	
 
 # fi
@@ -72,8 +72,8 @@ dataset_num=2
 
 # 	cd ../../../
 
-# 	echo "Cleaning data..."
-# 	python3 prepare_opusCorpus_bilingual.py $opusCorpus_dir/jw300 $src $tgt
+echo "Cleaning data..."
+python3 prepare_opusCorpus_bilingual.py $opusCorpus_dir/jw300 $src $tgt
 
 # fi
 
@@ -98,7 +98,7 @@ for l in $src $tgt; do
 	echo ""
 done
 
-perl $CLEAN $tmp/train.tags.$lang.tok $src $tgt $tmp/train.tags.$lang.clean 5 200
+perl $CLEAN -ratio 9 $tmp/train.tags.$lang.tok $src $tgt $tmp/train.tags.$lang.clean 5 200
 for l in $src $tgt; do
     perl $LC < $tmp/train.tags.$lang.tok.$l > $tmp/train.tags.$lang.$l
 done
