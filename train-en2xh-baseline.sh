@@ -25,14 +25,12 @@ CUDA_VISIBLE_DEVICES=0 fairseq-train \
 	--criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
 	--max-tokens 4096 \
 	--eval-bleu \
-	--eval-bleu-args '{"beam": 5, "max_len_a": 1.2, "max_len_b": 10}'\
+	--eval-bleu-args '{"beam": 5, "max_len_a": 1.2, "max_len_b": 10}' \
 	--eval-bleu-detok moses \
 	--eval-bleu-remove-bpe \
 	--eval-bleu-print-samples \
 	--best-checkpoint-metric bleu --maximize-best-checkpoint-metric
 
-# # Evaluate trained model
-# fairseq-generate data-bin-en2xh/baseline-tokenized.en-xh \
-# 	--path checkpoints/checkpoint_best.pt \
-# 	--batch-size 128 --beam 5 --remove-bpe
+	
+
 

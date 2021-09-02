@@ -100,7 +100,7 @@ done
 
 perl $CLEAN -ratio 9 $tmp/train.tags.$lang.tok $src $tgt $tmp/train.tags.$lang.clean 5 200
 for l in $src $tgt; do
-    perl $LC < $tmp/train.tags.$lang.tok.$l > $tmp/train.tags.$lang.$l
+    perl $LC < $tmp/train.tags.$lang.clean.$l > $tmp/train.tags.$lang.$l
 done
 
 echo "pre-processing valid/test data..."

@@ -31,8 +31,8 @@ CUDA_VISIBLE_DEVICES=0 fairseq-train \
 	--eval-bleu-print-samples \
 	--best-checkpoint-metric bleu --maximize-best-checkpoint-metric
 
-# Evaluate trained model
-fairseq-generate data-bin-en2zu/baseline-tokenized.en-zu \
-	--path checkpoints/checkpoint_best.pt \
-	--batch-size 128 --beam 5 --remove-bpe
+# # Evaluate trained model
+# fairseq-generate data-bin-en2zu/baseline-tokenized.en-zu \
+# 	--path checkpoints/checkpoint_best.pt \
+# 	--batch-size 128 --beam 5 --remove-bpe
 
