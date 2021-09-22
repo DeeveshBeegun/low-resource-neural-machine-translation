@@ -3,57 +3,69 @@ import string
 import re
 import glob
 
-# file_path = sys.argv[1]
-# lang = sys.argv[2]
-
 memat_dir = sys.argv[1]
+src_lang = sys.argv[2]
+tgt_lang = sys.argv[3]
 
 def combine_memat(src_lang, tgt_lang):
 
         for lang in [src_lang, tgt_lang]:
 
-                memat_filenames = glob.glob(memat_dir+"/*/*."+lang)
-                print(memat_filenames)
+                memat_filenames = glob.glob(memat_dir+'/MeMat/parallel'+"/*/*."+lang)
 
-                with open('combined_memat.' + lang, 'w') as outputFile:                        
-                	for name in memat_filenames:
-                		with open(name) as infile:
-                			for line in infile:
-                				outputFile.write(line)
+                with open(memat_dir + '/combined_memat.' + lang, 'w') as outputFile:
+                        for name in memat_filenames:
+                                with open(name) as infile:
+                                        for line in infile:
+                                                outputFile.write(line)
 
 
 def clean_corpus(file_path):
 
-	with open(file_path, 'r') as corpus:
-		corpus_content = corpus.read()
+        for lang in [src_lang, tgt_lang]:
 
-		split_corpus = corpus_content.strip().split('\n')
+                with open(file_path + '.' + lang, 'r') as corpus:
+                        corpus_content = corpus.read()
 
-		cleaned_corpus = []
+                        split_corpus = corpus_content.strip().split('\n')
 
-		for line in split_corpus:
-			
-			line = re.sub(r'\(([\s]?[-+]?[0-9]+[\s]?)\)', '', line)
+                        cleaned_corpus = []
 
-			line = re.sub(r'\(([\s]?[a-zA-Z][\s]?)\)', '', line)
+                        for line in split_corpus:
 
-			# # remove punctuations 
-			# line = line.translate(str.maketrans('', '', string.punctuation))
+                                # # remove all text and numbers enclosed by brackets
+                                # line = re.sub(r'\((\s?[-+]?[0-9a-zA-Z]+\s?)\)', '', line)
 
-			# remove extra space between words
-			line = ' '.join(re.split(r'\s+', line)).strip()
+                                # # remove all numbers followed by dots
+                                # line = re.sub(r'[0-9]+.', '', line)
 
-			line = re.sub(r'\*', '', line)
+                                # # remove single closed backets
+                                # line = re.sub(r'(\s?[-+]?[0-9a-zA-Z]+\s?)\)', '', line)
 
-			line = re.sub(r'[a-zA-Z]?\--+', '', line)
+                                # remove icons and bullet points
+                                 line = re.sub(r'©\s|~W~O\s|~\~T\s|~@\s|~V\s|~^\s|~W\s|~V\s|\s~G|~W~F\s|~G\s|~B\s', '', line)
 
-			line = re.sub(r'[a-zA-Z]?\...+', '', line)
+                                # # remove anything that is contained in a bracket and the bracket itself
+                                # # Ref: https://www.codegrepper.com/code-examples/python/python+remove+anything+in+brackets+from+string
+                                # line = re.sub(r"[\(\[].*?[\)\]]", '', line)
 
-			cleaned_corpus.append(''.join(line)  + '\n')
+                                # remove continous occurence of '.'
+                                line = re.sub(r'[a-zA-Z\s]?\.{3,}', '', line)
 
-		with open('cleaned.' + lang, 'w') as f:
-			for line in cleaned_corpus:
-				f.write(line)
+                                # remove continous occurence of '.' followed by empty spaces
+                                line = re.sub(r'(\s\.){3,}', '', line)
 
-combine_memat('en', 'xh')
-#clean_corpus('/parallel/combined_memat.en')
+                                # remove continous occurence of '-'
+                                line = re.sub(r'[a-zA-Z\s]?\-{3,}', '', line)
+
+                                # remove extra space between words
+                                line = re.sub(r'\s+', ' ', line)
+
+                                cleaned_corpus.append(''.join(line)  + '\n')
+
+                        with open(file_path + '.' + lang + '.cleaned', 'w') as f:
+                                for line in cleaned_corpus:
+                                        f.write(line)
+
+combine_memat(src_lang, tgt_lang)
+clean_corpus(memat_dir + '/combined_memat')

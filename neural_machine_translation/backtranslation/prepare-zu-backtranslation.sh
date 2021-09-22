@@ -7,7 +7,7 @@ TOKENIZER=$SCRIPTS/tokenizer/tokenizer.perl
 BPEROOT=subword-nmt/subword_nmt
 
 BPE_CODE=data-bin/en_zu/code
-SUBSAMPLE_SIZE=2500
+SUBSAMPLE_SIZE=250000
 LANG=zu
 
 OUTDIR=zu_monolingual
@@ -19,44 +19,46 @@ c4_dir=$datasets_dir/c4
 mkdir -p $datasets_dir $OUTDIR $tmp
 
 
-if [ -d $c4_dir ]
-then 
-    echo "Directory already, skipping download."
+# if [ -d $c4_dir ]
+# then
+#     echo "Directory already, skipping download."
 
-else 
-    mkdir $c4_dir
+# else
+#     mkdir $c4_dir
 
-    cd $c4_dir 
+#     cd $c4_dir
+#     GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/datasets/allenai/c4
+#     cd c4
+#     git lfs pull --include "multilingual/c4-zu.*.json.gz"
 
-    GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/datasets/allenai/c4
-    cd c4
-    git lfs pull --include "multilingual/c4-zu.*.json.gz"
+#     cd multiligual
 
-    cd multiligual 
+#     gunzip c4-zu.*.json.gz
 
-    gunzip c4-zu.*.json.gz
+#     python3 prepare_c4_monolingual.py *-zu.*-00000-*.json *-zu.*-00001-*json
 
-    python3 prepare_c4_monolingual.py *-zu.*-00000-*.json *-zu.*-00001-*json
+#     cd ../../
 
-    cd ../../
+# fi
 
-fi
+python3 prepare_c4_monolingual.py $c4_dir/multilingual/c4/c4_dataset.zu
+
 
 
 if [ -f $tmp/monolingual.${SUBSAMPLE_SIZE}.${LANG} ]; then
-	echo "found monolingual sample, skipping shuffle/sample/tokenize"
+        echo "found monolingual sample, skipping shuffle/sample/tokenize"
 else
-	cat $c4_dir/multiligual/c4.xh \
-	| shuf -n $SUBSAMPLE_SIZE \
-	| perl $TOKENIZER -threads 8 -a -l $LANG \
-	> $tmp/monolingual.${SUBSAMPLE_SIZE}.${LANG}
+        cat $c4_dir/multilingual/c4/c4_dataset.zu.cleaned \
+        | shuf -n $SUBSAMPLE_SIZE \
+        | perl $TOKENIZER -threads 8 -a -l $LANG \
+        > $tmp/monolingual.${SUBSAMPLE_SIZE}.${LANG}
 
 fi
 
-if [ -f $tmp/bpe.monolingual.${SUBSAMPLE_SIZE}.${LANG} ]; then 
-	echo "found BPE monolingual sample, skipping BPE step"
+if [ -f $tmp/bpe.monolingual.${SUBSAMPLE_SIZE}.${LANG} ]; then
+        echo "found BPE monolingual sample, skipping BPE step"
 else
-	 python $BPEROOT/apply_bpe.py -c $BPE_CODE \
+         python $BPEROOT/apply_bpe.py -c $BPE_CODE \
         < $tmp/monolingual.${SUBSAMPLE_SIZE}.${LANG} \
         > $tmp/bpe.monolingual.${SUBSAMPLE_SIZE}.${LANG}
 
@@ -69,10 +71,10 @@ else
     > $tmp/bpe.monolingual.dedup.${SUBSAMPLE_SIZE}.${LANG}
 fi
 
-if [ -f $OUTDIR/bpe.monolingual.dedup.00.xh ]; then
+if [ -f $OUTDIR/bpe.monolingual.dedup.00.zu ]; then
     echo "found sharded data, skipping sharding step"
 else
-    split --lines 100 --numeric-suffixes \
+    split --lines 10000 --numeric-suffixes \
         --additional-suffix .${LANG} \
         $tmp/bpe.monolingual.dedup.${SUBSAMPLE_SIZE}.${LANG} \
         $OUTDIR/bpe.monolingual.dedup.
