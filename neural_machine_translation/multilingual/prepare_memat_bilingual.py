@@ -43,10 +43,7 @@ def clean_corpus(file_path):
                                 # line = re.sub(r'(\s?[-+]?[0-9a-zA-Z]+\s?)\)', '', line)
 
                                 # remove icons and bullet points
-                                 # line = re.sub(r'(\s?[-+]?[0-9a-zA-Z]+\s?)\)', '', line)
-
-                                # remove icons and bullet points
-                                line = re.sub(r'©\s|~W~O\s|~\~T\s|~@\s|~V\s|~^\s|~W\s|~V\s|\s~G|~W~F\s|~G\s|~B\s', '', line)
+                                 line = re.sub(r'©\s|~W~O\s|~\~T\s|~@\s|~V\s|~^\s|~W\s|~V\s|\s~G|~W~F\s|~G\s|~B\s', '', line)
 
                                 # # remove anything that is contained in a bracket and the bracket itself
                                 # # Ref: https://www.codegrepper.com/code-examples/python/python+remove+anything+in+brackets+from+string

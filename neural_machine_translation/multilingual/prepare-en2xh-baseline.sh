@@ -13,12 +13,12 @@ TOKENIZER=$SCRIPTS/tokenizer/tokenizer.perl
 CLEAN=$SCRIPTS/training/clean-corpus-n.perl
 LC=$SCRIPTS/tokenizer/lowercase.perl
 BPEROOT=subword-nmt/subword_nmt
-BPE_TOKENS=30000
+BPE_TOKENS=10000
 
 src=en
 tgt=xh
 lang=en-xh
-prep=baseline-tokenized.en-xh
+prep=tokenized.xhzu-en
 tmp=$prep/tmp
 datasets_dir=xhosa_data/parallel # directory containing all the datasets
 
@@ -107,7 +107,7 @@ for l in $src $tgt; do
         tok=train.tags.$lang.tok.$l
 
         cat $datasets_dir/$f | perl $TOKENIZER -threads 8 -l $l > $tmp/$tok
-                echo ""
+        echo ""
 done
 
 perl $CLEAN -ratio 9 $tmp/train.tags.$lang.tok $src $tgt $tmp/train.tags.$lang.clean 5 200
@@ -147,9 +147,3 @@ for L in $src $tgt; do
         python $BPEROOT/apply_bpe.py -c $BPE_CODE < $tmp/$f > $prep/$f
     done
 done
-
-
-
-
-
-

@@ -43,7 +43,6 @@ for lang in [src_lang, tgt_lang]:
                         line = re.sub(r'\s+', ' ', line)
 
                         cleaned_corpus.append(''.join(line)  + '\n')
-
-                 with open(file_path + '.' + lang + '.cleaned', 'w') as f:
+                with open(file_path + '.' + lang + '.cleaned', 'w') as f:
                         for line in cleaned_corpus:
                                 f.write(line)

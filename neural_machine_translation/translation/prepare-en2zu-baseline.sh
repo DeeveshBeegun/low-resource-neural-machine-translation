@@ -20,7 +20,7 @@ tgt=zu
 lang=en-zu
 prep=baseline-tokenized.en-zu
 tmp=$prep/tmp
-datasets_dir=zulu_data/parallel # directory containing all the datasets 
+datasets_dir=zulu_data/parallel # directory containing all the datasets
 
 sadilar_dir=$datasets_dir/sadilar # contains sadilar datasets (zulu -> parallel -> sadilar)
 opusCorpus_dir=$datasets_dir/opus_corpus # contains jw300 datasets
@@ -30,47 +30,46 @@ dataset_num=2
 # mkdir -p $datasets_dir $tmp $prep
 
 # if [ -d $sadilar_dir ]
-# then 
-# 	echo "Directory already exist, skipping downloading."
+# then
+#       echo "Directory already exist, skipping downloading."
 
-# else 
-# 	mkdir -p $sadilar_dir 
+# else
+#       mkdir -p $sadilar_dir
 
-# 	url_eng_zu_sadilar="https://repo.sadilar.org/bitstream/handle/20.500.12185/399/en-zu.release.zip?sequence=3&isAllowed=y"
+#       url_eng_zu_sadilar="https://repo.sadilar.org/bitstream/handle/20.500.12185/399/en-zu.release.zip?sequence=3&isAllowed=y"
 
-# 	echo "Downloading English and Zulu corpora from the sadilar website..."
-# 	wget $url_eng_zu_sadilar --output-document $sadilar_dir/sadilar.zip
+#       echo "Downloading English and Zulu corpora from the sadilar website..."
+#       wget $url_eng_zu_sadilar --output-document $sadilar_dir/sadilar.zip
 
-# 	cd $sadilar_dir
+#       cd $sadilar_dir
+#       unzip sadilar.zip
 
-# 	unzip sadilar.zip
+#       mv *.eng.*.txt sadilar.en
+#       mv *.zul.*.txt sadilar.zu
 
-# 	mv *.eng.*.txt sadilar.en
-# 	mv *.zul.*.txt sadilar.zu
-
-# 	cd ../../../
+#       cd ../../../
 
 echo "Cleaning data..."
 python3 prepare_sadilar_bilingual.py $sadilar_dir/sadilar $src $tgt
-	
+
 
 # fi
 
 
 # if [ -d $opusCorpus_dir ]
-# then 
-# 	echo "Directory already exist, skipping downloading."
+# then
+#       echo "Directory already exist, skipping downloading."
 
 # else
-# 	mkdir -p $opusCorpus_dir
+#       mkdir -p $opusCorpus_dir
 
-# 	cd $opusCorpus_dir
+#       cd $opusCorpus_dir
 
-# 	echo "Downloading jw300 datasets from Opus Corpus..."
-# 	pip install opustools
-# 	opus_read -d JW300 -s zu -t en -wm moses -w jw300.zu jw300.en
+#       echo "Downloading jw300 datasets from Opus Corpus..."
+#       pip install opustools
+#       opus_read -d JW300 -s zu -t en -wm moses -w jw300.zu jw300.en
 
-# 	cd ../../../
+#       cd ../../../
 
 echo "Cleaning data..."
 python3 prepare_opusCorpus_bilingual.py $opusCorpus_dir/jw300 $src $tgt
@@ -91,32 +90,31 @@ python3 train_test_split.py $datasets_dir $dataset_num ${datasets[@]} $src $tgt
 echo "pre-processing train data..."
 
 for l in $src $tgt; do
-	f=train.tags.$lang.$l
-	tok=train.tags.$lang.tok.$l
+        f=train.tags.$lang.$l
+        tok=train.tags.$lang.tok.$l
 
-	cat $datasets_dir/$f | perl $TOKENIZER -threads 8 -l $l > $tmp/$tok
-	echo ""
+        cat $datasets_dir/$f | perl $TOKENIZER -threads 8 -l $l > $tmp/$tok
+        echo ""
 done
 
 perl $CLEAN -ratio 9 $tmp/train.tags.$lang.tok $src $tgt $tmp/train.tags.$lang.clean 5 200
 for l in $src $tgt; do
-    perl $LC < $tmp/train.tags.$lang.clean.$l > $tmp/train.tags.$lang.$l
+    mv $tmp/train.tags.$lang.clean.$l $tmp/train.tags.$lang.$l
 done
 
 echo "pre-processing valid/test data..."
 
 for l in $src $tgt; do
-	f=$tmp/test.$l
+        f=$tmp/test.$l
 
-	cat $datasets_dir/test.$l | perl $TOKENIZER -threads 8 -l $l | \
-	perl $LC > $f
-	echo ""
-done 
+        cat $datasets_dir/test.$l | perl $TOKENIZER -threads 8 -l $l > $f
+        echo ""
+done
 
 echo "creating train, valid, test..."
 for l in $src $tgt; do
-	awk '{if (NR%100 == 0)  print $0; }' $tmp/train.tags.en-zu.$l > $tmp/valid.$l
-    awk '{if (NR%100 != 0)  print $0; }' $tmp/train.tags.en-zu.$l > $tmp/train.$l
+        awk '{if (NR%100 == 0)  print $0; }' $tmp/train.tags.en-zu.$l > $tmp/valid.$l
+        awk '{if (NR%100 != 0)  print $0; }' $tmp/train.tags.en-zu.$l > $tmp/train.$l
 
 done
 
