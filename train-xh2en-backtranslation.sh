@@ -1,9 +1,11 @@
+eval "$(conda shell.bash hook)"
+conda activate /home/dbeegun/fairSeq
 
 BACKTRANS_DIR=neural_machine_translation/backtranslation
 
 # Download and prepare the data
 cd $BACKTRANS_DIR
-bash prepare-en2xh-baseline.sh
+#bash prepare-en2xh-baseline.sh
 
 cd ../../
 
@@ -11,84 +13,87 @@ cd ../../
 TEXT=$BACKTRANS_DIR/baseline-tokenized.en-xh/
 
 fairseq-preprocess \
-	--joined-dictionary \
-	--source-lang en --target-lang xh \
-	--trainpref $TEXT/train --validpref $TEXT/valid --testpref $TEXT/test \
-	--destdir $BACKTRANS_DIR/data-bin/en_xh --thresholdtgt 0 --thresholdsrc 0 \
-	--workers 20
+        --joined-dictionary \
+        --source-lang en --target-lang xh \
+        --trainpref $TEXT/train --validpref $TEXT/valid --testpref $TEXT/test \
+        --destdir $BACKTRANS_DIR/data-bin/en_xh --thresholdtgt 0 --thresholdsrc 0 \
+        --workers 20
 # Copy the BPE code into the data-bin directory for future use
 cp $BACKTRANS_DIR/baseline-tokenized.en-xh/code $BACKTRANS_DIR/data-bin/en_xh/code
-   
+
 
 # Train a reverse model (Xhosa to English) to do the back-translation
 CHECKPOINT_DIR=$BACKTRANS_DIR/checkpoint_xh_en_parallel
-fairseq-train $BACKTRANS_DIR/data-bin/en_xh \
-	--source-lang xh --target-lang en \
-	--arch transformer --share-all-embeddings \
-	--dropout 0.3 --weight-decay 0.0 \
-	--criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
-	--optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
-	--lr 0.001 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
-	--max-tokens 100 --update-freq 16 \
-	--max-update 30000 \
-	--max-epoch 1 \
+CUDA_VISIBLE_DEVICES=1 fairseq-train $BACKTRANS_DIR/data-bin/en_xh \
+        --source-lang xh --target-lang en \
+         --arch transformer --share-decoder-input-output-embed \
+        --dropout 0.1 --weight-decay 0.0 \
+        --criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
+        --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
+        --lr 0.001 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
+        --max-tokens 4000 --update-freq 16 \
+        --max-epoch 15 \
+        --patience 5 \
+        --fp16 \
     --eval-bleu \
     --eval-bleu-args '{"beam": 5, "max_len_a": 1.2, "max_len_b": 10}' \
     --eval-bleu-detok moses \
     --eval-bleu-remove-bpe \
     --eval-bleu-print-samples \
     --best-checkpoint-metric bleu --maximize-best-checkpoint-metric \
-	--save-dir $CHECKPOINT_DIR
+        --save-dir $CHECKPOINT_DIR
+
+# Compute bleu score of the reversed model
 
 # Prepare monolingual data
 cd $BACKTRANS_DIR
-bash prepare-xh-backtranslation.sh 
+bash prepare-xh-backtranslation.sh
 
 cd ../../
 
 
 # Binarize each shard of the monolingual data
 TEXT=$BACKTRANS_DIR/xh_monolingual
-for SHARD in $(seq -f "%02g" 0 1); do \
-	fairseq-preprocess \
-	--only-source \
-	--source-lang xh --target-lang en \
-	--joined-dictionary \
-	--srcdict $BACKTRANS_DIR/data-bin/en_xh/dict.xh.txt \
-	--testpref $TEXT/bpe.monolingual.dedup.${SHARD} \
-	--destdir $BACKTRANS_DIR/data-bin/xh_monolingual/shard${SHARD} \
-	--workers 20; \
-	cp $BACKTRANS_DIR/data-bin/en_xh/dict.en.txt $BACKTRANS_DIR/data-bin/xh_monolingual/shard${SHARD}/; \
+for SHARD in $(seq -f "%02g" 0 24); do \
+        fairseq-preprocess \
+        --only-source \
+        --source-lang xh --target-lang en \
+        --joined-dictionary \
+        --srcdict $BACKTRANS_DIR/data-bin/en_xh/dict.xh.txt \
+        --testpref $TEXT/bpe.monolingual.dedup.${SHARD} \
+        --destdir $BACKTRANS_DIR/data-bin/xh_monolingual/shard${SHARD} \
+        --workers 20; \
+        cp $BACKTRANS_DIR/data-bin/en_xh/dict.en.txt $BACKTRANS_DIR/data-bin/xh_monolingual/shard${SHARD}/; \
 done
 
 # perform back-translation over the monolingual data
 mkdir $BACKTRANS_DIR/backtranslation_output
-for SHARD in $(seq -f "%02g" 0 1); do \
-	fairseq-generate $BACKTRANS_DIR/data-bin/xh_monolingual/shard${SHARD} \
-	--path $CHECKPOINT_DIR/checkpoint_best.pt \
-	--skip-invalid-size-inputs-valid-test \
-	--max-tokens 100 \
-	--sampling --beam 1 \
-	> $BACKTRANS_DIR/backtranslation_output/sampling.shard${SHARD}.out; \
+for SHARD in $(seq -f "%02g" 0 24); do \
+        fairseq-generate $BACKTRANS_DIR/data-bin/xh_monolingual/shard${SHARD} \
+        --path $CHECKPOINT_DIR/checkpoint_best.pt \
+        --skip-invalid-size-inputs-valid-test \
+        --max-tokens 4000 \
+        --sampling --beam 1 \
+        > $BACKTRANS_DIR/backtranslation_output/sampling.shard${SHARD}.out; \
 
 done
 
 
 # use extract_bt_data.py scrit to re-combine the shards, extract the back-translations and apply length ratio filters
 python $BACKTRANS_DIR/extract_bt_data.py \
-	--minlen 1 --maxlen 250 --ratio 1.5 \
-	--output $BACKTRANS_DIR/backtranslation_output/bt_data --srclang en --tgtlang xh \
-	$BACKTRANS_DIR/backtranslation_output/sampling.shard*.out
+        --minlen 5 --maxlen 200 --ratio 9 \
+        --output $BACKTRANS_DIR/backtranslation_output/bt_data --srclang en --tgtlang xh \
+        $BACKTRANS_DIR/backtranslation_output/sampling.shard*.out
 
 # Binarise the filtered BT data and combine it with the parallel data
 TEXT=$BACKTRANS_DIR/backtranslation_output
 fairseq-preprocess \
-	--source-lang en --target-lang xh \
-	--joined-dictionary \
-	--srcdict $BACKTRANS_DIR/data-bin/en_xh/dict.en.txt \
-	--trainpref $TEXT/bt_data \
-	--destdir $BACKTRANS_DIR/data-bin/en_xh_bt \
-	--workers 20
+        --source-lang en --target-lang xh \
+        --joined-dictionary \
+        --srcdict $BACKTRANS_DIR/data-bin/en_xh/dict.en.txt \
+        --trainpref $TEXT/bt_data \
+        --destdir $BACKTRANS_DIR/data-bin/en_xh_bt \
+        --workers 20
 
 # We want to train on the combined data, so we'll symlink the parallel + BT data
 # in the wmt18_en_de_para_plus_bt directory. We link the parallel data as "train"
@@ -109,27 +114,24 @@ for LANG in en xh; do \
     done; \
 done
 
-# Train a model over the parallel + BT data 
+# Train a model over the parallel + BT data
 CHECKPOINT_DIR=$BACKTRANS_DIR/checkpoints_en_xh_parallel_plus_bt
-fairseq-train $BACKTRANS_DIR/data-bin/en_xh_para_plus_bt \
-	--upsample-primary 16 \
-	--source-lang en --target-lang xh \
-	--arch transformer --share-all-embeddings \
-	--dropout 0.3 --weight-decay 0.0 \
-	--criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
-	--optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
-	--lr 0.007 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
-	--max-tokens 100 --update-freq 16 \
-	--max-update 10000 \
-	--max-epoch 1 \
-	--eval-bleu \
+CUDA_VISIBLE_DEVICES=1 fairseq-train --fp16 \
+         $BACKTRANS_DIR/data-bin/en_xh_para_plus_bt \
+        --source-lang en --target-lang xh \
+        --upsample-primary 1 \
+        --arch transformer --share-decoder-input-output-embed \
+        --dropout 0.1 --weight-decay 0.0 \
+        --criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
+        --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
+        --lr 5e-4 --lr-scheduler inverse_sqrt --warmup-updates 4000 \
+        --max-tokens 4000 --update-freq 16 \
+        --max-epoch 15 \
+        --patience 5 \
+        --eval-bleu \
     --eval-bleu-args '{"beam": 5, "max_len_a": 1.2, "max_len_b": 10}' \
     --eval-bleu-detok moses \
     --eval-bleu-remove-bpe \
     --eval-bleu-print-samples \
     --best-checkpoint-metric bleu --maximize-best-checkpoint-metric \
-	--save-dir $CHECKPOINT_DIR
-
-
-
-	
+        --save-dir $CHECKPOINT_DIR
